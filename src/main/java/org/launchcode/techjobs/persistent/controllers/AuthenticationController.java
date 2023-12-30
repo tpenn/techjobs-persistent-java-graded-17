@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.launchcode.techjobs.persistent.models.data.UserRepository;
 import org.launchcode.techjobs.persistent.models.User;
+import org.launchcode.techjobs.persistent.models.dto.LoginFormDTO;
 import org.launchcode.techjobs.persistent.models.dto.RegisterFormDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +59,7 @@ public class AuthenticationController {
 
         User existingUser = userRepository.findByUsername(registerFormDTO.getUsername());
         if (existingUser != null) {
-            errors.rejectValue("username", "username.alreadyexists", "A user with that username already exists.");
+            errors.rejectValue("username", "username.alreadyexists", "That username is taken.");
             model.addAttribute("title", "Register");
             return "register";
         }
@@ -76,5 +77,43 @@ public class AuthenticationController {
         setUserInSession(request.getSession(), newUser);
 
         return "redirect:";
+    }
+
+    @GetMapping("/login")
+    public String displayLoginForm(Model model) {
+        model.addAttribute(new LoginFormDTO());
+        model.addAttribute("title", "Login");
+        return "login";
+    }
+
+    @PostMapping("/login")
+    public String processLoginForm(@ModelAttribute @Valid LoginFormDTO loginFormDTO, Errors errors, HttpServletRequest request, Model model) {
+        if (errors.hasErrors()) {
+            model.addAttribute("title", "Login");
+            return "login";
+        }
+
+        User user = userRepository.findByUsername(loginFormDTO.getUsername());
+        if (user == null) {
+            errors.rejectValue("username", "user.invalid", "Username does not exist.");
+            model.addAttribute("title", "Login");
+            return "login";
+        }
+
+        String password = loginFormDTO.getPassword();
+        if (!user.isMatchingPassword(password)) {
+            errors.rejectValue("password", "password.invalid", "Incorrect password.");
+            model.addAttribute("title", "Login");
+            return "login";
+        }
+
+        setUserInSession(request.getSession(), user);
+        return "redirect:";
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request) {
+        request.getSession().invalidate();
+        return "redirect:/login";
     }
 }
