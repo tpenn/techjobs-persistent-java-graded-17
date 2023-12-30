@@ -12,21 +12,22 @@ public class User extends AbstractEntity {
     private String username;
 
     @NotNull
-    private String passcodeHash;
+    private String passwordHash;
 
     public User() {
     }
 
-    public User(String username, String passcodeHash) {
+    public User(String username, String name, String passwordHash) {
         this.username = username;
-        this.passcodeHash = encoder.encode(passcodeHash);
+        this.setName(name);
+        this.passwordHash = encoder.encode(passwordHash);
     }
 
     public String getUsername() {
         return username;
     }
 
-    public boolean isMatchingPasscode(String passcode) {
-        return encoder.matches(passcode, passcodeHash);
+    public boolean isMatchingPasscode(String password) {
+        return encoder.matches(password, passwordHash);
     }
 }
